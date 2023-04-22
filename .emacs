@@ -37,13 +37,12 @@
   '(better-defaults                 ;; Set up some better Emacs defaults
     elpy                            ;; Emacs Lisp Python Environment    
     flycheck                        ;; On the fly syntax checking
-    py-autopep8                     ;; Run autopep8 on save
     flycheck-pyflakes               ;; Support pyflakes in flycheck
-    flycheck-pycheckers             ;; multiple syntax checker for Python, using Flycheck
-    flymake-ruff                    ;; A flymake plugin for python files using ruff
+    flycheck-pycheckers             ;; multiple syntax checker for Python
+    py-autopep8                     ;; Run autopep8 on save
     jedi                            ;; a Python auto-completion for Emacs
     pippel                          ;; Frontend to python package manager pip
-    py-import-check                 ;; Finds the unused python imports using importchecker
+    py-import-check                 ;; Finds the unused python imports with importchecker
     blacken                         ;; Black formatting on save
     ein                             ;; Emacs IPython Notebook
     conda                           ;; Conda 
@@ -51,6 +50,7 @@
     flycheck-clojure                ;; Flycheck: Clojure support
     material-theme                  ;; Theme
     company-tabnine                 ;; Install DL completion package
+    el-get                          ;; Additional package installer
     )
   )
 
@@ -68,6 +68,16 @@
 (setq inhibit-startup-message t)    ;; Hide the startup message
 (load-theme 'material t)            ;; Load material theme
 (global-linum-mode t)               ;; Enable line numbers globally
+(global-flycheck-mode)              ;; Enable flycheck globally
+
+;; PYTHON CONFIGURATION
+;; -------------------------------------
+(elpy-enable) ;; enable elpy
+
+;; use flycheck, not flymake with elpy
+(when (require 'flycheck nil t)
+  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+  (add-hook 'elpy-mode-hook 'flycheck-mode))
 
 
 ;; ---------------------------------------------------------------------
@@ -87,6 +97,22 @@
  ;; If there is more than one, they won't work right.
  )
 
+;; ---------------------------------------------------------------------
+;; el-get
+;; ---------------------------------------------------------------------
+
+(add-to-list 'load-path (expand-file-name "el-get/el-get" user-emacs-directory))
+
+(unless (require 'el-get nil 'noerror)
+  (package-initialize)
+  (package-install 'el-get)
+  (require 'el-get))
+
+;; (require 'el-get)
+(add-to-list 'el-get-recipe-path
+	     "/Users/delar/AppData/Roaming/.emacs.d/el-get-user/recipes")
+;; (el-get 'sync)
+
 
 ;; ---------------------------------------------------------------------
 ;; Python Setup
@@ -100,8 +126,13 @@
       python-shell-interpreter-args ""
       python-shell-prompt-detect-failure-warning nil)
 
-(add-to-list 'python-shell-completion-native-disabled-interpreters
-             "ipython")
+(add-to-list 'python-shell-completion-native-disabled-interpreters "ipython")
+
+;;(require 'python)
+
+;; ---------------------------------------------------------------------
+;; FlyCheck
+;; ---------------------------------------------------------------------
 
 ;; Enable Flycheck
 (when (require 'flycheck nil t)
@@ -112,7 +143,7 @@
 (require 'py-autopep8)
 (add-hook 'elpy-mode-hook 'py-autopep8-mode)
 
-;; (require 'python)
+
 
 ;; (setq python-shell-interpreter "c:/Program Files/Python39/python.exe")
 ;; (setq python-shell-interpreter
@@ -151,6 +182,7 @@
 (setq company-show-numbers t)
 
 
+
 ;; ---------------------------------------------------------------------
 ;; SBCL
 ;; ---------------------------------------------------------------------
@@ -159,6 +191,43 @@
 
 ;; Replace "sbcl" with the path to your implementation
 (setq inferior-lisp-program "sbcl")
+
+(defun sbcl ()
+  (interactive)
+  (slime))
+
+;; ---------------------------------------------------------------------
+;; Flycheck bug Fix for windows.
+;; ---------------------------------------------------------------------
+
+;;; On Windows, commands run by flycheck may have CRs (\r\n line endings).
+;;; Strip them out before parsing.
+(defun flycheck-parse-output (output checker buffer)
+  "Parse OUTPUT from CHECKER in BUFFER.
+
+OUTPUT is a string with the output from the checker symbol
+CHECKER.  BUFFER is the buffer which was checked.
+
+Return the errors parsed with the error patterns of CHECKER."
+  (let ((sanitized-output (replace-regexp-in-string "\r" "" output))
+        )
+    (funcall (flycheck-checker-get checker 'error-parser)
+	     sanitized-output checker buffer)))
+
+;; ---------------------------------------------------------------------
+;; ChatGPT
+;; ---------------------------------------------------------------------
+
+(el-get-bundle chatgpt :url "git@github.com:xenodium/chatgpt-shell.git")
+
+(require 'chatgpt-shell)
+(require 'dall-e-shell)
+
+(setq chatgpt-shell-openai-key
+      "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")
+
+(setq dall-e-shell-openai-key
+      "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")
 
 ;; ---------------------------------------------------------------------
 ;; End of File
