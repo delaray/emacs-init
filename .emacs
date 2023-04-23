@@ -223,11 +223,9 @@ Return the errors parsed with the error patterns of CHECKER."
 (require 'chatgpt-shell)
 (require 'dall-e-shell)
 
-(setq chatgpt-shell-openai-key
-      "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")
+(setq chatgpt-shell-openai-key (getenv "OPEN_AI_KEY")
 
-(setq dall-e-shell-openai-key
-      "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")
+(setq dall-e-shell-openai-key (getenv "OPEN_AI_KEY")
 
 ;; ---------------------------------------------------------------------
 ;; End of File
